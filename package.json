@@ -1,5 +1,5 @@
 {
-  "name": "minesweeper-core",
+  "name": "@timot8n/minesweeper-engine",
   "version": "1.0.0",
   "description": "Minesweeper domain logic.",
   "main": "index.js",
