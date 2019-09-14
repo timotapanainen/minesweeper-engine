@@ -5,65 +5,33 @@ const readline = require('readline').createInterface({
     output: process.stdout
 });
 
-function playGame() {
+async function playGame() {
     console.log('Welcome to Minesweeper!');
-    askDifficultyUntilOk()
-        .then(difficulty => new Minesweeper(Difficulty.valueOf(difficulty)))
-        .then((game) => playRound(game))
-        .catch(err => console.log(err));
-}
-
-function askDifficultyUntilOk() {
-    return askDifficulty().catch((reason) => {
-        console.log(reason.message);
-        return askDifficultyUntilOk();
-    });
-}
-
-function askDifficulty() {
-    return new Promise((resolve, reject) => {
-        readline.question(
-            'Select one of the following difficulty levels (beginner, intermediate, expert):',
-            (input) => {
-                if (['beginner', 'intermediate', 'expert'].includes(input))
-                    resolve(input);
-                else
-                    reject(new Error(`unknown difficulty level: ${input}`))
-            }
-        );
-    });
-}
-
-function playRound(game) {
-    askCoordinateToReveal(game)
-        .then(c => {
-            game.revealSquareAt(c);
-            if (!game.isEnded())
-                return playRound(game);
-            else {
-                printBoard(game);
-                if (game.isCleared())
-                    console.log('Congratulations, you have cleared the minefield!!');
-                else
-                    console.log('Unfortunately you were blown up!');
-                process.exit(0);
-            }
-        }).catch(err => {
-        console.log(err.message);
-        playRound(game);
-    });
-}
-
-function askCoordinateToReveal(game) {
+    let difficulty = await askInput('Type difficulty level [beginner, intermediate, expert]:');
+    let game = new Minesweeper(Difficulty.valueOf(difficulty));
+    while (!game.isEnded()) {
+        printBoard(game);
+        let coordinate = await askCoordinateToReveal();
+        game.revealSquareAt(coordinate);
+    }
     printBoard(game);
+    if (game.isCleared())
+        console.log('Congratulations, you have cleared the minefield!!');
+    else
+        console.log('Unfortunately you were blown up!');
+    process.exit(0);
+}
+
+async function askCoordinateToReveal() {
+    let xy = await askInput('Type coordinate to reveal [x,y]?:');
+    let [x, y] = xy.split(',');
+    return {x: parseInt(x), y: parseInt(y)};
+}
+
+function askInput(question) {
     return new Promise((resolve, reject) => {
-        readline.question(
-            `Which square to reveal (x,y)?:`,
-            (xy) => {
-                let [x, y] = xy.split(',');
-                resolve({x: parseInt(x), y: parseInt(y)});
-            });
-    });
+        readline.question(question, (input) => resolve(input));
+    })
 }
 
 function printBoard(game) {
